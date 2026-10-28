@@ -120,8 +120,12 @@
 
             const layers = 40;
             const segments = 64;
-            const rectHalfX = R * 0.75;
-            const rectHalfY = R * 0.5;
+            // Grow the near (rectangular) end so it always covers the full view at start
+            const nearDist = camera.position.z - 1.25 * R;
+            const viewHalfY = Math.tan((camera.fov * Math.PI) / 360) * nearDist * 1.02;
+            const viewHalfX = viewHalfY * camera.aspect;
+            const rectHalfX = Math.max(R * 0.75, viewHalfX);
+            const rectHalfY = Math.max(R * 0.5, viewHalfY);
 
             for (let z = 0; z < layers; z++) {
                 const morphFactor = z / (layers - 1);
