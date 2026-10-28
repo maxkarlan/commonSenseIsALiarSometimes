@@ -8,7 +8,7 @@
         body {
             margin: 0;
             padding: 0;
-            background: #FFF;
+            background: #000;
             overflow: hidden;
             font-family: 'Courier New', monospace;
             touch-action: none; /* prevent browser gestures while dragging */
@@ -19,7 +19,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            color: #666;
+            color: #999;
             font-size: 18px;
             pointer-events: none;
             z-index: 1000;
@@ -35,7 +35,6 @@
     <script>
         let scene, camera, renderer;
         let morphingObject, mainLight, sideLight, endCircle;
-        let rainbowCircles = [];
         let isMouseDown = false;
         let mouseX = 0, mouseY = 0;
         let rotationX = 0, rotationY = 0;
@@ -83,7 +82,7 @@
 
         function init() {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xffffff);
+            scene.background = new THREE.Color(0x000000);
 
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
 
@@ -99,7 +98,6 @@
 
             createMorphingObject();
             createEndCircle();
-            createRainbowCircles();
             setupLighting();
             setupEventListeners();
             animate();
@@ -172,8 +170,8 @@
             geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
             geometry.computeVertexNormals();
 
-            const material = new THREE.MeshLambertMaterial({
-                color: 0x000000,
+            const material = new THREE.MeshBasicMaterial({
+                color: 0xffffff,
                 side: THREE.DoubleSide
             });
 
@@ -194,7 +192,7 @@
             // Create a circle at the far end of the tunnel
             const circleGeometry = new THREE.CircleGeometry(R * 0.95, 64);
             const circleMaterial = new THREE.MeshBasicMaterial({
-                color: 0x000000,
+                color: 0xffffff,
                 side: THREE.DoubleSide,
                 transparent: true,
                 opacity: 0
@@ -204,101 +202,6 @@
             // Position at the circular end of the tunnel (zPos at first layer)
             endCircle.position.z = -1.25 * R;
             scene.add(endCircle);
-        }
-
-        function createRainbowCircles() {
-            // Clear existing rainbow circles
-            rainbowCircles.forEach(group => {
-                group.children.forEach(child => {
-                    child.geometry.dispose();
-                    child.material.dispose();
-                });
-                scene.remove(group);
-            });
-            rainbowCircles = [];
-
-            // Generate 2176 colors for a smooth rainbow spectrum
-            const numColors = 544;
-            const colors = [];
-
-            // Helper function to convert HSL to RGB hex
-            function hslToHex(h, s, l) {
-                const c = (1 - Math.abs(2 * l - 1)) * s;
-                const x = c * (1 - Math.abs((h / 60) % 2 - 1));
-                const m = l - c / 2;
-                let r, g, b;
-
-                if (h < 60) { r = c; g = x; b = 0; }
-                else if (h < 120) { r = x; g = c; b = 0; }
-                else if (h < 180) { r = 0; g = c; b = x; }
-                else if (h < 240) { r = 0; g = x; b = c; }
-                else if (h < 300) { r = x; g = 0; b = c; }
-                else { r = c; g = 0; b = x; }
-
-                const ri = Math.round((r + m) * 255);
-                const gi = Math.round((g + m) * 255);
-                const bi = Math.round((b + m) * 255);
-
-                return (ri << 16) | (gi << 8) | bi;
-            }
-
-            // Generate rainbow colors from red to magenta
-            for (let i = 0; i < numColors; i++) {
-                const hue = (i / numColors) * 300; // 0 to 300 degrees (red to magenta)
-                colors.push(hslToHex(hue, 1.0, 0.5));
-            }
-
-            const endCircleRadius = R * 0.95;
-            const endCircleZ = -1.25 * R; // endCircle's z position
-            const numCircles = colors.length;
-
-            // Distribute circles across the width of the endCircle
-            const totalWidth = endCircleRadius * 2;
-            const spacing = totalWidth / (numCircles - 1);
-
-            for (let i = 0; i < numCircles; i++) {
-                // Position from -radius to +radius
-                const xPos = -endCircleRadius + (i * spacing);
-
-                // Calculate the radius for this circle based on the height at this x position
-                // At position x on a circle, the vertical height is 2 * sqrt(R² - x²)
-                // So the radius of this rainbow circle should be sqrt(R² - x²)
-                const circleRadius = Math.sqrt(Math.max(0, endCircleRadius * endCircleRadius - xPos * xPos));
-
-                // Create a group for this circle (to hold both the face and the edge)
-                const circleGroup = new THREE.Group();
-
-                // Create the colored circle face
-                const circleGeometry = new THREE.CircleGeometry(circleRadius, 64);
-                const circleMaterial = new THREE.MeshBasicMaterial({
-                    color: colors[i],
-                    side: THREE.DoubleSide
-                });
-                const circleMesh = new THREE.Mesh(circleGeometry, circleMaterial);
-                circleGroup.add(circleMesh);
-
-                // Create the black edge ring (only if radius is large enough)
-                if (circleRadius > 2) {
-                    const ringGeometry = new THREE.RingGeometry(circleRadius - 2, circleRadius, 64);
-                    const ringMaterial = new THREE.MeshBasicMaterial({
-                        color: 0x000000,
-                        side: THREE.DoubleSide
-                    });
-                    const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
-                    circleGroup.add(ringMesh);
-                }
-
-                // Position the group
-                circleGroup.position.x = xPos;
-                circleGroup.position.y = 0;
-                circleGroup.position.z = endCircleZ;
-
-                // Rotate 90 degrees around y-axis to be edge-on from initial viewpoint
-                circleGroup.rotation.y = Math.PI / 2;
-
-                scene.add(circleGroup);
-                rainbowCircles.push(circleGroup);
-            }
         }
 
         function setupLighting() {
@@ -386,7 +289,6 @@
             positionCameraToFit(0.75);
             createMorphingObject();
             createEndCircle();
-            createRainbowCircles();
             setupLighting();
         }
 
@@ -400,11 +302,6 @@
                 endCircle.rotation.x = rotationX;
                 endCircle.rotation.y = rotationY;
             }
-            rainbowCircles.forEach(circle => {
-                circle.rotation.x = rotationX;
-                // Keep 90-degree rotation and apply user rotation on top
-                circle.rotation.y = Math.PI / 2 + rotationY;
-            });
             renderer.render(scene, camera);
         }
 
