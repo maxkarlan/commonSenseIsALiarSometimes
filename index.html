@@ -13,23 +13,34 @@
             font-family: 'Courier New', monospace;
             touch-action: none; /* prevent browser gestures while dragging */
         }
-        
-        #instruction-text {
+
+        .title {
             position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #999;
-            font-size: 18px;
+            left: 0;
+            right: 0;
+            padding: 0 16px;
+            text-align: center;
+            color: #fff;
+            mix-blend-mode: difference; /* reads against both the white shape and black background */
+            font-size: clamp(18px, 4vw, 40px);
+            line-height: 1.4;
             pointer-events: none;
             z-index: 1000;
-            transition: opacity 0.3s ease;
-            opacity: 0; /* initially hidden */
+            opacity: 0;
+            animation: fadeIn 2s ease forwards;
+        }
+
+        .title-top { top: 6vh; animation-delay: 1s; }
+        .title-bottom { bottom: 6vh; animation-delay: 3.5s; }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
         }
     </style>
 </head>
 <body>
-    <div id="instruction-text">Click to drag</div>
+    <div class="title title-top">Common Sense Is A Liar</div>
+    <div class="title title-bottom">Sometimes</div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
@@ -39,27 +50,6 @@
         let mouseX = 0, mouseY = 0;
         let rotationX = 0, rotationY = 0;
         let R = 160; // dynamic radius, set in init/resize
-        let hasUserDragged = false; // track if user has ever dragged
-
-        function showInstructionText() {
-            const instructionText = document.getElementById('instruction-text');
-            if (instructionText && !hasUserDragged) {
-                instructionText.style.opacity = '1';
-            }
-        }
-
-        function hideInstructionText() {
-            if (!hasUserDragged) {
-                hasUserDragged = true;
-                const instructionText = document.getElementById('instruction-text');
-                if (instructionText) {
-                    instructionText.style.opacity = '0';
-                    setTimeout(() => {
-                        instructionText.style.display = 'none';
-                    }, 300); // match the CSS transition duration
-                }
-            }
-        }
 
         function computeRadius() {
             const minDim = Math.min(window.innerWidth, window.innerHeight);
@@ -101,9 +91,6 @@
             setupLighting();
             setupEventListeners();
             animate();
-            
-            // Show instruction text 3 seconds after everything is initialized
-            setTimeout(showInstructionText, 2500);
         }
 
         function createMorphingObject() {
@@ -252,7 +239,6 @@
             rotationX += deltaY * 0.01;
             mouseX = event.clientX;
             mouseY = event.clientY;
-            hideInstructionText(); // hide instruction when dragging
         }
 
         function onMouseUp() { isMouseDown = false; }
@@ -277,7 +263,6 @@
             rotationX += deltaY * 0.01;
             mouseX = t.clientX;
             mouseY = t.clientY;
-            hideInstructionText(); // hide instruction when dragging
         }
 
         function onTouchEnd(e) {
